@@ -1,0 +1,11 @@
+{
+    "mcpServers": {
+        "laravel-boost": {
+            "command": "D:\\OSPanel646\\modules\\PHP-8.2\\php.exe",
+            "args": [
+                "D:\\OSPanel646\\home\\invoice-generator.loc\\artisan",
+                "boost:mcp"
+            ]
+        }
+    }
+}
