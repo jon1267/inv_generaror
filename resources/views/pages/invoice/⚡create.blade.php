@@ -15,6 +15,8 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use App\Models\Template;
+use App\Models\Invoice;
+use App\Models\InvoiceItem;
 
 new #[Layout('layouts.public')] class extends Component implements HasActions, HasSchemas
 {
@@ -55,22 +57,26 @@ new #[Layout('layouts.public')] class extends Component implements HasActions, H
                                 ->label('Company Name')
                                 ->required()
                                 ->maxLength(255)
-                                ->placeholder('Your Company Name'),
+                                ->placeholder('Your Company Name')
+                                ->live(debounce: 500),
                             Textarea::make('company_address')
                                 ->label('Company Address')
                                 ->rows(3)
-                                ->placeholder('123 Main St, City, Country'),
+                                ->placeholder('123 Main St, City, Country')
+                                ->live(debounce: 500),
                             Grid::make(2)
                                 ->schema([
                                     TextInput::make('company_email')
                                         ->label('Email')
                                         ->email()
-                                        ->placeholder('hello@company.com'),
+                                        ->placeholder('hello@company.com')
+                                        ->live(debounce: 500),
 
                                     TextInput::make('company_phone')
                                         ->label('Phone')
                                         ->tel()
-                                        ->placeholder('+1 (555) 123-4567'),
+                                        ->placeholder('+1 (555) 123-4567')
+                                        ->live(debounce: 500),
                             ]),
                     ])
                 ])->columnSpan(1),
@@ -222,6 +228,50 @@ new #[Layout('layouts.public')] class extends Component implements HasActions, H
         return $this->getSubtotal() + $this->getTaxAmount();
     }
 
+    public function getPreviewInvoice(): Invoice
+    {
+        $data = $this->data;
+
+        $invoice = new Invoice([
+            'invoice_number' => 'INV-' . now()->year . '-XXXX',
+            'company_name' => $data['company_name'] ?? 'Your Company',
+            'company_address' => $data['company_address'] ?? null,
+            'company_email' => $data['company_email'] ?? null,
+            'company_phone' => $data['company_phone'] ?? null,
+            'client_name' => $data['client_name'] ?? 'Client Name',
+            'client_address' => $data['client_address'] ?? null,
+            'client_email' => $data['client_email'] ?? null,
+            'client_phone' => $data['client_phone'] ?? null,
+            'invoice_date' => isset($data['invoice_date']) ? Carbon\Carbon::parse($data['invoice_date']) : now(),
+            'due_date' => isset($data['due_date']) ? Carbon\Carbon::parse($data['due_date']) : now()->addDays(30),
+            'notes' => $data['notes'] ?? null,
+            'terms' => $data['terms'] ?? null,
+            'subtotal' => $this->getSubtotal(),
+            'tax_rate' => $data['tax_rate'] ?? 0,
+            'tax_amount' => $this->getTaxAmount(),
+            'total' => $this->getTotal(),
+            'template_id' => $data['template_id'] ?? 1,
+        ]);
+
+        //set the template relationship
+        $invoice->setRelation('template', Template::find($data['template_id'] ?? 1));
+
+        // create temporary invoice items
+        $items = collect($data['items'] ?? [])->map(function ($item, $index) {
+            return new InvoiceItem([
+                'description' => $item['description'] ?? '',
+                'quantity' => $item['quantity'] ?? 1,
+                'unit_price' => $item['unit_price'] ?? 0,
+                'total' => ($item['quantity'] ?? 1) * ($item['unit_price'] ?? 0),
+                'sort_order' => $index,
+            ]);
+        });
+
+        $invoice->setRelation('items', $items);
+
+        return $invoice;
+    }
+
     public function with(): array
     {
         return [
@@ -229,6 +279,7 @@ new #[Layout('layouts.public')] class extends Component implements HasActions, H
             'subtotal' => $this->getSubtotal(),
             'taxAmount' => $this->getTaxAmount(),
             'total' => $this->getTotal(),
+            'previewInvoice' => $this->getPreviewInvoice(),
         ];
     }
 };
@@ -297,9 +348,16 @@ new #[Layout('layouts.public')] class extends Component implements HasActions, H
         <div class="space-y-6">
             <div class="bg-white rounded-lg shadow-sm overflow-hidden">
                 <div class="bg-gray-50 border-b border-gray-200 px-4 py-3 flex justify-between items-center">
-                    <p class="font-semibold text-gray-700">Live Preview</p>
-                    <p class="text-xs text-gray-500">Preview will appear here as you fill te form</p>
+                    <h3 class="font-semibold text-gray-700">Live Preview</h3>
+                    <span class="text-xs text-gray-500">Updates as you type</span>
                 </div>
+
+                <div class="p-4 bg-gray-100">
+                    <div class="bg-white rounded shadow-sm" style="transform: scale(0.85); transform-origin: top;">
+                        <x-invoice-renderer :invoice="$previewInvoice" />
+                    </div>
+                </div>
+
             </div>
         </div>
 
