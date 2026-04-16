@@ -70,13 +70,13 @@ new #[Layout('layouts.public')] class extends Component implements HasActions, H
                                         ->label('Email')
                                         ->email()
                                         ->placeholder('hello@company.com')
-                                        ->live(debounce: 500),
+                                        ->live(onBlur: true),
 
                                     TextInput::make('company_phone')
                                         ->label('Phone')
                                         ->tel()
                                         ->placeholder('+1 (555) 123-4567')
-                                        ->live(debounce: 500),
+                                        ->live(onBlur: true),
                             ]),
                     ])
                 ])->columnSpan(1),
@@ -195,7 +195,7 @@ new #[Layout('layouts.public')] class extends Component implements HasActions, H
                         ->live(debounce: 500),
                 ]),
 
-             Select::make('template_id')
+             /*Select::make('template_id')
                  ->label('Invoice Template')
                  ->options(Template::active()->pluck('name', 'id'))
                  ->default(1)
@@ -203,7 +203,7 @@ new #[Layout('layouts.public')] class extends Component implements HasActions, H
                  ->live()
                  ->afterStateUpdated(function ($state) {
                      $this->selectedTemplateId = false;
-                 })
+                 })*/
 
         ])->statePath('data');
     }
@@ -346,13 +346,29 @@ new #[Layout('layouts.public')] class extends Component implements HasActions, H
 
         {{-- Right Column: Preview --}}
         <div class="space-y-6">
+
+            {{-- Template Selector --}}
+            <x-template-selector
+                :templates="App\Models\Template::active()->get()"
+                :selected-id="$this->data['template_id']"
+            />
+
+            {{-- preview --}}
             <div class="bg-white rounded-lg shadow-sm overflow-hidden">
                 <div class="bg-gray-50 border-b border-gray-200 px-4 py-3 flex justify-between items-center">
                     <h3 class="font-semibold text-gray-700">Live Preview</h3>
                     <span class="text-xs text-gray-500">Updates as you type</span>
                 </div>
 
-                <div class="p-4 bg-gray-100">
+                <div class="p-4 bg-gray-100 relative">
+                    {{-- Loading Overlay --}}
+                    {{--<div wire:loading wire:target="data.company_name,data.client_name,data.items,data.template_id"
+                         class="absolute inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-10 rounded">
+                        <div class="bg-white rounded-lg shadow-lg px-4 py-2">
+                            <span class="text-sm text-gray-600">Updating preview...</span>
+                        </div>
+                    </div>--}}
+
                     <div class="bg-white rounded shadow-sm" style="transform: scale(0.85); transform-origin: top;">
                         <x-invoice-renderer :invoice="$previewInvoice" />
                     </div>
