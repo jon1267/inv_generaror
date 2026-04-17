@@ -195,7 +195,8 @@ new #[Layout('layouts.public')] class extends Component implements HasActions, H
                         ->live(debounce: 500),
                 ]),
 
-             /*Select::make('template_id')
+             // Template Select. For UI selector, comment this && uncomment the <x-template-selector /> component in the view
+             Select::make('template_id')
                  ->label('Invoice Template')
                  ->options(Template::active()->pluck('name', 'id'))
                  ->default(1)
@@ -203,7 +204,7 @@ new #[Layout('layouts.public')] class extends Component implements HasActions, H
                  ->live()
                  ->afterStateUpdated(function ($state) {
                      $this->selectedTemplateId = false;
-                 })*/
+                 })
 
         ])->statePath('data');
     }
@@ -347,11 +348,11 @@ new #[Layout('layouts.public')] class extends Component implements HasActions, H
         {{-- Right Column: Preview --}}
         <div class="space-y-6">
 
-            {{-- Template Selector --}}
-            <x-template-selector
+            {{-- Template Selector (for selector uncomment below ) --}}
+            {{--<x-template-selector
                 :templates="App\Models\Template::active()->get()"
                 :selected-id="$this->data['template_id']"
-            />
+            />--}}
 
             {{-- preview --}}
             <div class="bg-white rounded-lg shadow-sm overflow-hidden">
@@ -362,12 +363,12 @@ new #[Layout('layouts.public')] class extends Component implements HasActions, H
 
                 <div class="p-4 bg-gray-100 relative">
                     {{-- Loading Overlay --}}
-                    {{--<div wire:loading wire:target="data.company_name,data.client_name,data.items,data.template_id"
+                    <div wire:loading wire:target="data.company_name,data.client_name,data.items,data.template_id"
                          class="absolute inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-10 rounded">
                         <div class="bg-white rounded-lg shadow-lg px-4 py-2">
                             <span class="text-sm text-gray-600">Updating preview...</span>
                         </div>
-                    </div>--}}
+                    </div>
 
                     <div class="bg-white rounded shadow-sm" style="transform: scale(0.85); transform-origin: top;">
                         <x-invoice-renderer :invoice="$previewInvoice" />
